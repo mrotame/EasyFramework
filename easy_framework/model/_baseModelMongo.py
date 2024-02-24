@@ -15,19 +15,19 @@ class BaseModelMongo(Document):
 
     id: bson.ObjectId
     _deleted = fields.BooleanField(required=True, default=False)
-    _owner_id = fields.DynamicField(default=lambda: current_user.id if isinstance(current_user,UserMixin) else "")
+    _owner_id = fields.DynamicField(default=lambda: current_user.id if isinstance(current_user, UserMixin) else "")
 
     @classmethod
     def get_one(cls, *args, **kwargs)-> t.Self:
         if args:
-            res: t.Self = cls().__class__.objects(*args, **{"_deleted":False}).first()
+            res: t.Self = cls.objects(*args, **{"_deleted":False}).first()
         else: 
-            res: t.Self = cls().__class__.objects(**{**kwargs, '_deleted':False}).first()
+            res: t.Self = cls.objects(**{**kwargs, '_deleted':False}).first()
         return res
     
     @classmethod
     def get_many(cls: t.Type[t.Self], *args, **kwargs)-> t.List[t.Self]:
-        return cls().__class__.objects(*args, **{**kwargs, '_deleted':False})
+        return cls.objects(*args, **{**kwargs, '_deleted':False})
     
     def update(self)-> t.Self:
         self.save()

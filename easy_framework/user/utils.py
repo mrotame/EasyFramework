@@ -4,8 +4,6 @@ from typing import TYPE_CHECKING
 from flask import current_app, g, has_request_context
 from werkzeug.local import LocalProxy
 
-from easy_framework.user.userMixin import AnonymousUser
-
 if TYPE_CHECKING:
     from .userModel import UserModel
     from ..auth import AuthManager

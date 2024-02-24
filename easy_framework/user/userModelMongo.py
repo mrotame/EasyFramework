@@ -10,6 +10,7 @@ class UserModelMongo(UserMixin, BaseModelMongo):
     meta = {"collection_name": 'FLASK_EASY_FRAMEWORK_USER', 'allow_inheritance': True}
     login = fields.StringField(required=True)
     password = fields.BinaryField(required=True)
+    _owner_id = None
 
     @property
     def passwordManager(self):
