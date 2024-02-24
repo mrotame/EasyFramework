@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "easy-framework"
+version = "0.0.1"
+description = ""
+authors = ["Matheus Menezes Almeida <mrotame@gmail.com>"]
+readme = "README.md"
+packages = [{include = "easy_framework"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+Flask = "^3.0.2"
+Flask-Cors = "^4.0.0"
+SQLAlchemy = "^2.0.27"
+marshmallow = "^3.20.2"
+passlib = "^1.7.4"
+loguru = "^0.7.2"
+python-dotenv = "^1.0.1"
+psycopg2-binary = "^2.9.9"
+bcrypt = "^4.1.2"
+mongoengine = "^0.27.0"
+prodot = "^0.3.7"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.1"
+autopep8 = "^2.0.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
