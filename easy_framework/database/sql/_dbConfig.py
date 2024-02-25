@@ -1,9 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import (Session, declarative_base, scoped_session,
                             sessionmaker)
-from sqlalchemy.orm.session import close_all_sessions, engine
+from sqlalchemy.orm.session import close_all_sessions, Engine
 
-from ._base import base as defaultBase
+from ._base import Base as DefaultBase
 
 
 class DbConfig():
@@ -34,7 +34,7 @@ class DbConfig():
         username,
         password,
         create_all,
-        base = defaultBase
+        base = DefaultBase
     ) -> None :
         self.__dialect = dialect
         self.__username = username
@@ -52,7 +52,7 @@ class DbConfig():
         self.session_scoped = scoped_session(sessionmaker(bind=self.engine))
         if(create_all): self.create_all()
 
-    def createEngine(self)-> engine:
+    def createEngine(self)-> Engine:
         '''
         returns the SQLAlchemy engine
         '''

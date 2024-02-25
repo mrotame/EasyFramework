@@ -3,21 +3,24 @@ from __future__ import annotations
 import typing as t
 from datetime import datetime
 
+from sqlalchemy.sql import func
+from sqlalchemy.orm import Session
+from sqlalchemy import orm
+
 from easy_framework.user.userMixin import UserMixin
 from easy_framework.user.utils import current_user
-from sqlalchemy import Column, DateTime, Integer, Boolean
-from sqlalchemy.orm import Session
+from easy_framework.database.sql import Sqldb, Base
 
-from ..database.sql import Sqldb, base
-
-class BaseModelSql(base):
+class BaseModelSql(orm.MappedAsDataclass, Base):
     __abstract__ = True
-    id = Column(Integer, primary_key=True)
-    _owner_id = Column(Integer, default=lambda: current_user.id if isinstance(current_user, UserMixin) else None)
-    _created_at = Column(DateTime, default=datetime.now())
-    _updated_at = Column(DateTime, default=datetime.now(),
-                        onupdate=datetime.now())
-    _deleted = Column(Boolean, default=False)
+    
+    id: orm.Mapped[int] = orm.mapped_column(init=False, primary_key=True)
+    _owner_id: orm.Mapped[t.Optional[int]] = orm.mapped_column(init=False, nullable=True, insert_default=lambda: current_user.id if isinstance(current_user, UserMixin) else None)
+    _created_at: orm.Mapped[datetime] = orm.mapped_column(init=False, server_default=func.now())
+    _updated_at: orm.Mapped[datetime] = orm.mapped_column(init=False, server_default=func.now(),
+                        server_onupdate=func.now())
+    _deleted: orm.Mapped[bool] = orm.mapped_column(init=False, insert_default=False)
+    
 
     def __new__(cls: type[t.Self], *args, **kwargs) -> t.Self:
         cls.db: Sqldb = cls.get_databaseClass(cls)
@@ -28,21 +31,19 @@ class BaseModelSql(base):
 
     @classmethod
     def get_one(cls, *args, **kwargs) -> t.Self:
-        cls = cls()
         with cls.db.getScopedSession() as dbSession:
             if args:
-                return cls.get_one_base_query(dbSession, cls.__class__).filter(*args, **kwargs).first()
+                return cls.get_one_base_query(dbSession, cls).filter(*args, **kwargs).first()
             else: 
-                return cls.get_one_base_query(dbSession, cls.__class__).filter_by(**kwargs).first()
+                return cls.get_one_base_query(dbSession, cls).filter_by(**kwargs).first()
     
     @classmethod
     def get_many(cls, *args, **kwargs) -> t.List[t.Self]:
-        cls = cls()
         with cls.db.getScopedSession() as dbSession:
             if args:
-                return cls.get_many_base_query(dbSession, cls.__class__).filter(*args, **kwargs).all()
+                return cls.get_many_base_query(dbSession, cls).filter(*args, **kwargs).all()
             else:
-                return cls.get_many_base_query(dbSession, cls.__class__).filter_by(**kwargs).all()
+                return cls.get_many_base_query(dbSession, cls).filter_by(**kwargs).all()
 
     def save(self):
         with self.db.getScopedSession() as dbSession:
@@ -61,14 +62,17 @@ class BaseModelSql(base):
             else:
                 self.soft_delete_procedure(dbSession)
             return self
-        
+    
+    @classmethod
     def get_one_by_unique_field(self, model, field, value):
         with self.db.getScopedSession() as dbSession:
             return dbSession.query(model).filter_by(**{field:value})
 
+    @classmethod
     def get_one_base_query(self, dbSession: Session, model):
         return dbSession.query(model).filter(model._deleted != True)
 
+    @classmethod
     def get_many_base_query(self, dbSession: Session, model):
         return dbSession.query(model).filter(model._deleted != True)
 

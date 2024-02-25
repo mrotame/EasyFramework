@@ -49,14 +49,16 @@ class Sqldb():
         get the database config class by passing all the configs defined
         in the flask app config attribute
         '''
+        env: str = self.app.config['EASY_FRAMEWORK_ENVIRONMENT'].upper()
+
         return self.dbConfigClass(
-            create_all = self.app.config.get('EASY_FRAMEWORK_DB_SQL_CREATE_ALL'),
-            dialect = self.app.config.get('EASY_FRAMEWORK_DB_SQL_DIALECT'),
-            uri = self.app.config.get('EASY_FRAMEWORK_DB_SQL_URI'),
-            port = self.app.config.get('EASY_FRAMEWORK_DB_SQL_PORT'),
-            databaseName = self.app.config.get('EASY_FRAMEWORK_DB_SQL_DBNAME'),
-            username = self.app.config.get('EASY_FRAMEWORK_DB_SQL_USERNAME'),
-            password = self.app.config.get('EASY_FRAMEWORK_DB_SQL_PASSWORD')
+            create_all = self.app.config.get(f'EASY_FRAMEWORK_DB_{env}_SQL_CREATE_ALL'),
+            dialect = self.app.config.get(f'EASY_FRAMEWORK_DB_{env}_SQL_DIALECT'),
+            uri = self.app.config.get(f'EASY_FRAMEWORK_DB_{env}_SQL_URI'),
+            port = self.app.config.get(f'EASY_FRAMEWORK_DB_{env}_SQL_PORT'),
+            databaseName = self.app.config.get(f'EASY_FRAMEWORK_DB_{env}_SQL_DBNAME'),
+            username = self.app.config.get(f'EASY_FRAMEWORK_DB_{env}_SQL_USERNAME'),
+            password = self.app.config.get(f'EASY_FRAMEWORK_DB_{env}_SQL_PASSWORD')
         )
 
     # session = getNewSession()

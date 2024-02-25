@@ -12,7 +12,7 @@ class AuthModelMongo(BaseModelMongo):
     meta = {'collection': collection_name}
     token = fields.StringField(required=True)
     user_id = fields.ObjectIdField(required=True)
-    expiration_date = fields.DateTimeField(required=True)
+    expiration_date = fields.DateTimeField(required=False)
 
     def save(self):
         '''

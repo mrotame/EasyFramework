@@ -1,12 +1,16 @@
-from sqlalchemy.orm import Session
+from sqlalchemy import orm
+import sqlalchemy as sa
 
 from tests import TestCase
-from tests.classes import ModelTestSql
-
+from easy_framework.model import BaseModelSql
+class ModelTestSql(BaseModelSql):
+    __tablename__ = "test_db_sql"
+    id: orm.Mapped[int] = orm.mapped_column(primary_key=True)
+    info: orm.Mapped[str]
 
 class TestDbSql(TestCase):
     def test_assert_session_is_active_before_closing_it(self):
-        dbSession: Session = self.get_sqldb().getNewSession()
+        dbSession: orm.Session = self.get_sqldb().getNewSession()
 
         self.assertTrue(dbSession.is_active)
 

@@ -1,5 +1,6 @@
 
 import sqlalchemy as sa
+from sqlalchemy import orm
 from mongoengine import fields
 from flask import Flask
 
@@ -12,7 +13,7 @@ class TestSqlModelConstructor(TestCase):
     
     class _TestModel(BaseModelSql):
         __tablename__ = 'TestModelConstructor'
-        name = sa.Column(sa.String(60))
+        name: orm.Mapped[str] = orm.mapped_column(sa.String(60))
 
     @property
     def _testConstructor(self):

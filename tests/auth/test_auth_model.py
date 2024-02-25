@@ -4,8 +4,13 @@ from datetime import datetime
 from easy_framework.auth import AuthModel
 from easy_framework.auth import AuthModelMongo
 from tests import generate_objectid
+from tests.classes import UserTestSql
 
 class TestAuthModel(TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        UserTestSql(self.get_flask_app_sql(), "test", "123")
+
     def test_insert_new_session_and_check_it_values(self):
         with self.get_flask_app_sql().test_request_context():
             session = AuthModel(user_id=1, token='123').save()

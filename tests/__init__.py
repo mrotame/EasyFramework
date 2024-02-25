@@ -44,6 +44,7 @@ class FlaskClient:
     def get_flaskApp(self)-> Flask:
         app = Flask(__name__)
         app.client_name = 'sql'
+        app.config.setdefault('EASY_FRAMEWORK_ENVIRONMENT', 'test')
         app.config['EASY_FRAMEWORK_DB_SQL_DBNAME'] = 'testdb.db'
         app.config['EASY_FRAMEWORK_DB_SQL_URI'] = '/'
         app.config['EASY_FRAMEWORK_DB_MONGO_ACTIVATE'] = True

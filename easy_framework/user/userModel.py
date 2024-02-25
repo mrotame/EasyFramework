@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
-from sqlalchemy import Column, String
+
+import sqlalchemy as sa
+from sqlalchemy import orm
 
 from easy_framework.model import BaseModelSql
 from .userMixin import UserMixin
@@ -8,8 +10,9 @@ from flask import current_app
 
 class UserModel(BaseModelSql, UserMixin):
     __tablename__ = 'FLASK_EASY_FRAMEWORK_USER'
-    login = Column(String(60), unique=True)
-    password = Column(String(255))
+    
+    login: orm.Mapped[str]  = orm.mapped_column(sa.String(60), unique=True)
+    password: orm.Mapped[str] = orm.mapped_column(sa.String(255))
 
     @property
     def passwordManager(self):

@@ -55,16 +55,37 @@ class EasyFramework():
 
     def setDefaultConfig(self):
         # ----- EASY FRAMEWORK BASIC CONFIGS -----
+        self.app.config.setdefault('EASY_FRAMEWORK_ENVIRONMENT', 'dev')
         
         # ----- SQL DATABASE CONFIG -----
         self.app.config.setdefault('EASY_FRAMEWORK_DB_SQL_ACTIVATE', True)
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_SQL_DIALECT', 'sqlite')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_SQL_URI', '/')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_SQL_PORT', '')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_SQL_DBNAME', 'sqlite.db')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_SQL_USERNAME', '')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_SQL_PASSWORD', '')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_SQL_CREATE_ALL', False)
+
+        #Production Database
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_PROD_SQL_DIALECT', 'sqlite')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_PROD_SQL_URI', '/')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_PROD_SQL_PORT', '')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_PROD_SQL_DBNAME', 'prod_sqlite.db')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_PROD_SQL_USERNAME', '')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_PROD_SQL_PASSWORD', '')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_PROD_SQL_CREATE_ALL', False)
+
+        # Development Database
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_DEV_SQL_DIALECT', 'sqlite')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_DEV_SQL_URI', '/')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_DEV_SQL_PORT', '')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_DEV_SQL_DBNAME', 'dev_sqlite.db')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_DEV_SQL_USERNAME', '')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_DEV_SQL_PASSWORD', '')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_DEV_SQL_CREATE_ALL', False)
+
+        # Test database
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_TEST_SQL_DIALECT', 'sqlite')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_TEST_SQL_URI', '/')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_TEST_SQL_PORT', '')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_TEST_SQL_DBNAME', 'test_sqlite.db')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_TEST_SQL_USERNAME', '')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_TEST_SQL_PASSWORD', '')
+        self.app.config.setdefault('EASY_FRAMEWORK_DB_TEST_SQL_CREATE_ALL', False)
 
         # ----- MONGO DATABASE CONFIG -----
         self.app.config.setdefault('EASY_FRAMEWORK_DB_MONGO_ACTIVATE', False)

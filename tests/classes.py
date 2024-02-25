@@ -1,11 +1,15 @@
+import typing as t
 from datetime import datetime
 
 from flask import Flask
 import sqlalchemy as sa
+from sqlalchemy import orm
 import marshmallow as mar
 import mongoengine as mon
 
 
+from easy_framework.user.userMixin import UserMixin
+from easy_framework.user.utils import current_user
 from easy_framework.model import BaseModelSql
 from easy_framework.serializer import BaseSerializerSql
 from easy_framework.model import BaseModelMongo
@@ -53,13 +57,15 @@ class UserTestMongo:
 
 class ModelTestSql(BaseModelSql):
     __tablename__ = 'TestModelSql'
-    username = sa.Column(sa.String)
-    password = sa.Column(sa.String)
-    test_datetime = sa.Column(sa.DateTime, default=datetime.now())
-    age = sa.Column(sa.Integer)
-    name = sa.Column(sa.String)
-    info = sa.Column(sa.String)
-    desc = sa.Column(sa.String)
+    id: orm.Mapped[int] = orm.mapped_column(primary_key=True, default=None)
+    _owner_id: orm.Mapped[t.Optional[int]] = orm.mapped_column(nullable=True, insert_default=lambda: current_user.id if isinstance(current_user, UserMixin) else None, default=None)
+    username: orm.Mapped[t.Optional[str]] = orm.mapped_column(default=None)
+    password: orm.Mapped[t.Optional[str]] = orm.mapped_column(default=None)
+    test_datetime: orm.Mapped[datetime] = orm.mapped_column(default=datetime.now())
+    age: orm.Mapped[t.Optional[int]] = orm.mapped_column(default=None)
+    name: orm.Mapped[t.Optional[str]] = orm.mapped_column(default=None)
+    info: orm.Mapped[t.Optional[str]] = orm.mapped_column(default=None)
+    desc: orm.Mapped[t.Optional[str]] = orm.mapped_column(default=None)
 
 
 class SerializerTestSql(BaseSerializerSql):

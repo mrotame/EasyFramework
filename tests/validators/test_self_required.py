@@ -1,7 +1,9 @@
-from flask import Flask
+import typing as t
+
 from mongoengine import fields as mo_fields
 from marshmallow import fields as ma_fields
 import sqlalchemy as sa
+from sqlalchemy import orm
 
 from easy_framework.validator import Self_required
 from easy_framework.exception import NotTheOwner, AuthMissingError
@@ -15,7 +17,7 @@ from tests import FlaskClient
 
 class ModelTestSql(BaseModelSql):
     __tablename__ = "ModelTestSql_self_required_validator_test"
-    test = sa.String()
+    test: orm.Mapped[t.Optional[str]] = orm.mapped_column(default=None)
 
 class SerializerTestSql(BaseSerializerSql):
     class Meta:

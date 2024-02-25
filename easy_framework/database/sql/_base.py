@@ -1,6 +1,8 @@
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 '''
 Declarative base to be used by all models and db connections that
 are managed by Easy Framework
 '''
-base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
