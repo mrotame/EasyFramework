@@ -1,12 +1,36 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 import types
 from flask import request
 from marshmallow import Schema, fields
 
-from easy_framework.model import BaseModelSql
 
 
 class BaseSerializerSql(Schema):
+    '''
+    Base serializer class for SQL Models.
+
+    This serializer use the marshmallow library
+    to validate the data and convert it to a
+    SQL Model class. You can combine one to many meta
+    classes.
+
+    ### Properties
+    - class Meta():
+        "
+        The default meta class that works for all 
+        request methods. Any marshmallow field declared here
+        will be use regardless of the request method.
+        "
+    - classes GetMeta() | PutMeta() | DeleteMeta()...
+        "
+        for each other Meta class defined in the 
+        serializer class, it will work for its respective 
+        request method. Specific methods classes does support
+        all existent HTTP request methods
+        EG. GetMeta will run only for GET request
+        "
+    '''
+
     @abstractmethod
     def Meta():
         class Meta:

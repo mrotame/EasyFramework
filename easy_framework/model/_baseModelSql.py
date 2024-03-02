@@ -11,62 +11,78 @@ from easy_framework.user.userMixin import UserMixin
 from easy_framework.user.utils import current_user
 from easy_framework.database.sql import Sqldb, Base
 
+
 class BaseModelSql(orm.MappedAsDataclass, Base):
     __abstract__ = True
-    
+
     id: orm.Mapped[int] = orm.mapped_column(init=False, primary_key=True)
-    _owner_id: orm.Mapped[t.Optional[int]] = orm.mapped_column(init=False, nullable=True, insert_default=lambda: current_user.id if isinstance(current_user, UserMixin) else None)
-    _created_at: orm.Mapped[datetime] = orm.mapped_column(init=False, server_default=func.now())
-    _updated_at: orm.Mapped[datetime] = orm.mapped_column(init=False, server_default=func.now(),
-                        server_onupdate=func.now())
+    _owner_id: orm.Mapped[t.Optional[int]] = orm.mapped_column(
+        init=False,
+        nullable=True,
+        insert_default=lambda: (
+            current_user.id if isinstance(current_user, UserMixin) else None
+        ),
+    )
+    _created_at: orm.Mapped[datetime] = orm.mapped_column(
+        init=False, server_default=func.now()
+    )
+    _updated_at: orm.Mapped[datetime] = orm.mapped_column(
+        init=False, server_default=func.now(), server_onupdate=func.now()
+    )
     _deleted: orm.Mapped[bool] = orm.mapped_column(init=False, insert_default=False)
-    
 
-    def __new__(cls: type[t.Self], *args, **kwargs) -> t.Self:
-        cls.db: Sqldb = cls.get_databaseClass(cls)
-        return super().__new__(cls)
-
+    @classmethod
     def get_databaseClass(self) -> Sqldb:
         return Sqldb()
 
     @classmethod
     def get_one(cls, *args, **kwargs) -> t.Self:
-        with cls.db.getScopedSession() as dbSession:
+        with cls.get_databaseClass().getScopedSession() as dbSession:
             if args:
-                return cls.get_one_base_query(dbSession, cls).filter(*args, **kwargs).first()
-            else: 
-                return cls.get_one_base_query(dbSession, cls).filter_by(**kwargs).first()
-    
+                return (
+                    cls.get_one_base_query(dbSession, cls)
+                    .filter(*args, **kwargs)
+                    .first()
+                )
+            else:
+                return (
+                    cls.get_one_base_query(dbSession, cls).filter_by(**kwargs).first()
+                )
+
     @classmethod
     def get_many(cls, *args, **kwargs) -> t.List[t.Self]:
-        with cls.db.getScopedSession() as dbSession:
+        with cls.get_databaseClass().getScopedSession() as dbSession:
             if args:
-                return cls.get_many_base_query(dbSession, cls).filter(*args, **kwargs).all()
+                return (
+                    cls.get_many_base_query(dbSession, cls)
+                    .filter(*args, **kwargs)
+                    .all()
+                )
             else:
                 return cls.get_many_base_query(dbSession, cls).filter_by(**kwargs).all()
 
     def save(self):
-        with self.db.getScopedSession() as dbSession:
+        with self.get_databaseClass().getScopedSession() as dbSession:
             self.save_procedure(dbSession)
             return self
 
     def update(self):
-        with self.db.getScopedSession() as dbSession:
+        with self.get_databaseClass().getScopedSession() as dbSession:
             self.update_procedure(dbSession)
             return self
 
-    def delete(self, method='soft'):
-        with self.db.getScopedSession() as dbSession:
-            if method == 'hard':
+    def delete(self, method="soft"):
+        with self.get_databaseClass().getScopedSession() as dbSession:
+            if method == "hard":
                 self.hard_delete_procedure(dbSession)
             else:
                 self.soft_delete_procedure(dbSession)
             return self
-    
+
     @classmethod
     def get_one_by_unique_field(self, model, field, value):
-        with self.db.getScopedSession() as dbSession:
-            return dbSession.query(model).filter_by(**{field:value})
+        with self.get_databaseClass().getScopedSession() as dbSession:
+            return dbSession.query(model).filter_by(**{field: value})
 
     @classmethod
     def get_one_base_query(self, dbSession: Session, model):
@@ -94,15 +110,15 @@ class BaseModelSql(orm.MappedAsDataclass, Base):
         dbSession.merge(self)
         dbSession.commit()
 
-    '''
+    """
     # if needed, model can be self updated by merging after making the changes
     # like the example below:
 
     def selfChangeData(self, *args, **kwargs):
-        with self.db.getScopedSession() as dbSession: # Start the session within scope
+        with self.get_databaseClass().getScopedSession() as dbSession: # Start the session within scope
             self.login = 'updatedFromBaseModel' # Change the data as you want
             dbSession.merge(self) # Merge to the new session
             dbSession.commit() # Commit the changes
             # After that, any changes will not be stored even if commited.
             return 'ok'
-    '''
+    """

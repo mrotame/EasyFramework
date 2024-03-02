@@ -1,17 +1,17 @@
-import typing as t
 from flask import Flask
+from flask import current_app
 from sqlalchemy.orm import Session
 
 from ._dbConfig import DbConfig
-from contextvars import ContextVar
-from flask import current_app
+from easy_framework._context import cache
 
 
-class SessionFactory():
-    '''
+class SessionFactory:
+    """
     Session factory to be used within `with` scope
-    '''
-    def __init__(self, cls: 'Sqldb'):
+    """
+
+    def __init__(self, cls: "Sqldb"):
         self.cls = cls
 
     def __enter__(self):
@@ -20,8 +20,9 @@ class SessionFactory():
     def __exit__(self, exception_type, exception_value, traceback):
         self.cls.closeSession()
 
-class Sqldb():
-    '''
+
+class Sqldb:
+    """
     Main Database class that will be used to access the database.
 
     ### Parameters
@@ -33,44 +34,46 @@ class Sqldb():
     If you want to change any configuration, the connection method or anithing else,
     you can inherit and overwrite most of this class attributes and methods.
     Also, give it a look at the DbConfig class
-    '''
+    """
 
-    dbConfigClass = DbConfig # the class responsible for configurating the db connection
+    dbConfigClass = (
+        DbConfig  # the class responsible for configurating the db connection
+    )
     dbSession: Session = None
 
-    def __init__(self, flaskApp:Flask=None)-> None:
+    def __init__(self, flaskApp: Flask = None) -> None:
         if not flaskApp:
             flaskApp = current_app
         self.app = flaskApp
         self.dbConfig = self.getDbConfig()
 
-    def getDbConfig(self)->DbConfig:
-        '''
+    def getDbConfig(self) -> DbConfig:
+        """
         get the database config class by passing all the configs defined
         in the flask app config attribute
-        '''
-        env: str = self.app.config['EASY_FRAMEWORK_ENVIRONMENT'].upper()
+        """
+        env: str = cache.config.EASY_FRAMEWORK_ENVIRONMENT.upper()
 
         return self.dbConfigClass(
-            create_all = self.app.config.get(f'EASY_FRAMEWORK_DB_{env}_SQL_CREATE_ALL'),
-            dialect = self.app.config.get(f'EASY_FRAMEWORK_DB_{env}_SQL_DIALECT'),
-            uri = self.app.config.get(f'EASY_FRAMEWORK_DB_{env}_SQL_URI'),
-            port = self.app.config.get(f'EASY_FRAMEWORK_DB_{env}_SQL_PORT'),
-            databaseName = self.app.config.get(f'EASY_FRAMEWORK_DB_{env}_SQL_DBNAME'),
-            username = self.app.config.get(f'EASY_FRAMEWORK_DB_{env}_SQL_USERNAME'),
-            password = self.app.config.get(f'EASY_FRAMEWORK_DB_{env}_SQL_PASSWORD')
+            create_all=getattr(cache.config, f"EASY_FRAMEWORK_DB_{env}_SQL_CREATE_ALL"),
+            dialect=getattr(cache.config, f"EASY_FRAMEWORK_DB_{env}_SQL_DIALECT"),
+            uri=getattr(cache.config, f"EASY_FRAMEWORK_DB_{env}_SQL_URI"),
+            port=getattr(cache.config, f"EASY_FRAMEWORK_DB_{env}_SQL_PORT"),
+            databaseName=getattr(cache.config, f"EASY_FRAMEWORK_DB_{env}_SQL_DBNAME"),
+            username=getattr(cache.config, f"EASY_FRAMEWORK_DB_{env}_SQL_USERNAME"),
+            password=getattr(cache.config, f"EASY_FRAMEWORK_DB_{env}_SQL_PASSWORD"),
         )
 
     # session = getNewSession()
-    def getNewSession(self)-> Session:
-        '''
+    def getNewSession(self) -> Session:
+        """
         retrieves a new scoped session
-        '''
+        """
         return self.dbConfig.session_scoped()
 
     # with getScopedSession() as dbSession:
-    def getScopedSession(self)-> SessionFactory:
-        '''
+    def getScopedSession(self) -> SessionFactory:
+        """
         retrieve a new session and close it automatically when finishing using it.
 
         ### How to use:
@@ -80,11 +83,11 @@ class Sqldb():
         > ...
         > # no need to manually close the session. It was already closed when left the context
         ```
-        '''
+        """
         return SessionFactory(self)
 
-    def openSession(self)->None:
-        '''
+    def openSession(self) -> None:
+        """
         Default method that actives the session. Don't forget to call
         `.closeSession()` after finishing using the session.
 
@@ -95,18 +98,18 @@ class Sqldb():
         ... # Using the session here
         > database.closeSession() # Close the session after using it
         ```
-        '''
+        """
         self.dbSession = self.getNewSession()
 
-    def closeSession(self)-> None:
-        '''
+    def closeSession(self) -> None:
+        """
         Close the session after used. Always call this method
         if you are not using the context method to grab the sessions
-        '''
+        """
         return self.dbConfig.session_scoped.remove()
 
-    def setScopedSession(self)->None:
-        '''
+    def setScopedSession(self) -> None:
+        """
         Open a new session and close it automatically when finishing using it.
 
         ### How to use:
@@ -117,11 +120,13 @@ class Sqldb():
         > ...
         > # no need to manually close the session. It was already closed when left the context
         ```
-        '''
-        class SessionFactory():
+        """
+
+        class SessionFactory:
             def __enter__(factorySelf):
                 self.openSession()
 
             def __exit__(factorySelf, exception_type, exception_value, traceback):
                 self.closeSession()
+
         return SessionFactory()

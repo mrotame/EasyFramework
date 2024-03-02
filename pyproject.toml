@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "easy-framework"
-version = "0.0.2"
+version = "0.0.3"
 description = ""
 authors = ["Matheus Menezes Almeida <mrotame@gmail.com>"]
 readme = "README.md"

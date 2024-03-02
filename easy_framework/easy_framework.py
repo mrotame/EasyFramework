@@ -1,23 +1,18 @@
 import typing as t
-from datetime import timedelta
 from pathlib import Path
 import os
 from flask import Flask
 
-from .auth import AuthManager
-from .auth import AuthView
+from .database.sql import Base
 from .database.sql import Sqldb
 from .database.mongo import Mongodb
-from .auth._authModel import AuthModel
-from .user.userManager import UserManager
-from .user.userModel import UserModel
-from .auth import PasswordManager
-from easy_framework._context import cache
 from .view._viewHandler import ViewHandler
+from .config import Config
+from easy_framework._context import cache
 
 
-class EasyFramework():
-    '''
+class EasyFramework:
+    """
     Easy framework.
 
     ### Description
@@ -26,22 +21,32 @@ class EasyFramework():
     The user can achieve more, doing less.
 
     # Parameters
-    * `flaskApp` The flask application client. Ex: 
+    * `flaskApp` The flask application client. Ex:
 
     ```
     app = Flask(__name__)
     EasyFramework(app)
     ```
-    '''
+    """
 
     exceptionList: t.List[BaseException] = cache.api_exception_list
+    run_server: t.Callable
+    config = Config()
 
     def __init__(self, flaskApp: Flask) -> None:
         self.app = flaskApp
-        
+
+        self.run_server = self.app.run
+        self.app.run = self._before_run_server
         self.setupCache()
-        self.setDefaultConfig()
+
+    def _before_run_server(self, *args, **kwargs):
+        self.run_all_configs()
+        self.run_server(*args, **kwargs)
+
+    def run_all_configs(self):
         self.database_register()
+        self.database_create_all()
         self.exceptions_register()
         self.authView_register()
         self.userManager_register()
@@ -53,122 +58,64 @@ class EasyFramework():
         cache.app = self.app
         cache.root_dir = Path(os.path.dirname(os.path.dirname(__file__)))
 
-    def setDefaultConfig(self):
-        # ----- EASY FRAMEWORK BASIC CONFIGS -----
-        self.app.config.setdefault('EASY_FRAMEWORK_ENVIRONMENT', 'dev')
-        
-        # ----- SQL DATABASE CONFIG -----
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_SQL_ACTIVATE', True)
-
-        #Production Database
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_PROD_SQL_DIALECT', 'sqlite')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_PROD_SQL_URI', '/')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_PROD_SQL_PORT', '')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_PROD_SQL_DBNAME', 'prod_sqlite.db')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_PROD_SQL_USERNAME', '')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_PROD_SQL_PASSWORD', '')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_PROD_SQL_CREATE_ALL', False)
-
-        # Development Database
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_DEV_SQL_DIALECT', 'sqlite')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_DEV_SQL_URI', '/')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_DEV_SQL_PORT', '')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_DEV_SQL_DBNAME', 'dev_sqlite.db')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_DEV_SQL_USERNAME', '')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_DEV_SQL_PASSWORD', '')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_DEV_SQL_CREATE_ALL', False)
-
-        # Test database
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_TEST_SQL_DIALECT', 'sqlite')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_TEST_SQL_URI', '/')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_TEST_SQL_PORT', '')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_TEST_SQL_DBNAME', 'test_sqlite.db')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_TEST_SQL_USERNAME', '')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_TEST_SQL_PASSWORD', '')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_TEST_SQL_CREATE_ALL', False)
-
-        # ----- MONGO DATABASE CONFIG -----
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_MONGO_ACTIVATE', False)
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_MONGO_URI', '127.0.0.1')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_MONGO_PORT', '27017')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_MONGO_DBNAME', 'test')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_MONGO_USERNAME', 'admin')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_MONGO_PASSWORD', 'admin')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_MONGO_AUTHMECHANISM', 'SCRAM-SHA-256')
-        self.app.config.setdefault('EASY_FRAMEWORK_DB_MONGO_AUTHSOURCE', 'admin')
-
-        # ----- AUTH MODULE CONFIG -----
-        self.app.config.setdefault('EASY_FRAMEWORK_AUTH_VIEW', AuthView)
-        self.app.config.setdefault('EASY_FRAMEWORK_AUTH_MANAGER', AuthManager)
-        self.app.config.setdefault(
-            'EASY_FRAMEWORK_AUTH_VIEW_AUTO_REGISTER', True) # Set this to false if you want EasyFramework to not manage the Auth system
-        self.app.config.setdefault('EASY_FRAMEWORK_AUTH_METHOD', 'database_sql')
-        self.app.config.setdefault(
-            'EASY_FRAMEWORK_AUTH_TOKEN_EXPIRATION', timedelta(days=1))
-        self.app.config.setdefault('EASY_FRAMEWORK_AUTH_PASSWORD_MANAGER', PasswordManager)
-        self.app.config.setdefault('EASY_FRAMEWORK_AUTH_MODEL', AuthModel)
-        
-        # ----- USER CONFIG -----
-        self.app.config.setdefault('EASY_FRAMEWORK_USER_MODEL', UserModel)
-        self.app.config.setdefault('EASY_FRAMEWORK_USER_MANAGER', UserManager)
-
-        # ---- VIEW CONFIG ----
-        self.app.config.setdefault('EASY_FRAMEWORK_VIEW_FOLDER', 'view')
-        self.app.config.setdefault('EASY_FRAMEWORK_VIEW_AUTO_IMPORT', False)
-        self.app.config.setdefault("EASY_FRAMEWORK_VIEW_CLASS_NAME", "View")
+        cache.config = self.config
 
     def authView_register(self):
-        ''' 
+        """
         Register the Auth View if the config `EASY_FRAMEWORK_AUTH_VIEW_AUTO_REGISTER` is set to True
-        '''
-        if self.app.config.get('EASY_FRAMEWORK_AUTH_VIEW_AUTO_REGISTER') is True:
-            view: AuthView = self.app.config.get('EASY_FRAMEWORK_AUTH_VIEW')
+        """
+        if self.config.EASY_FRAMEWORK_AUTH_VIEW_AUTO_REGISTER is True:
+            view = self.config.EASY_FRAMEWORK_AUTH_VIEW
             for route in view.routes:
                 self.app.add_url_rule(
-                    route, view_func=view.as_view(view.name+'/'+route))
+                    route, view_func=view.as_view(view.name + "/" + route)
+                )
 
     def exceptions_register(self):
-        ''' 
+        """
         Register the default exceptions to the flask app
-        '''
+        """
         for exception in self.exceptionList:
-            self.app.register_error_handler(
-                exception, exception.getExceptionFunction)
+            self.app.register_error_handler(exception, exception.getExceptionFunction)
 
     def userManager_register(self):
-        ''' 
+        """
         Register the User manager specified in the config
-        '''
-        self.app.userManager = self.app.config['EASY_FRAMEWORK_USER_MANAGER'](
-            self.app)
+        """
+        self.app.userManager = self.config.EASY_FRAMEWORK_USER_MANAGER(self.app)
 
     def authManager_register(self):
-        ''' 
+        """
         Register the Auth manager specified in the config
-        '''
-        self.app.authManager = self.app.config['EASY_FRAMEWORK_AUTH_MANAGER'](
-            self.app)
+        """
+        self.app.authManager = self.config.EASY_FRAMEWORK_AUTH_MANAGER(self.app)
 
     def passwordManager_register(self):
-        ''' 
+        """
         Register the Password manager specified in the config
-        '''
-        self.app.passwordManager = self.app.config['EASY_FRAMEWORK_AUTH_PASSWORD_MANAGER']()
+        """
+        self.app.passwordManager = self.config.EASY_FRAMEWORK_AUTH_PASSWORD_MANAGER()
 
     def database_register(self):
-        ''' 
+        """
         Initializes and register the Sqldb in the config
-        '''
-        if self.app.config['EASY_FRAMEWORK_DB_SQL_ACTIVATE']:
-            self.app.config['EASY_FRAMEWORK_DB_SQLDB'] = Sqldb(self.app)
-        
-        if self.app.config['EASY_FRAMEWORK_DB_MONGO_ACTIVATE']:
-            self.app.config['EASY_FRAMEWORK_DB_MONGODB'] = Mongodb(self.app)
+        """
+        if self.config.EASY_FRAMEWORK_DB_SQL_ACTIVATE:
+            self.config.EASY_FRAMEWORK_DB_SQLDB = Sqldb(self.app)
+
+        if self.config.EASY_FRAMEWORK_DB_MONGO_ACTIVATE:
+            self.config.EASY_FRAMEWORK_DB_MONGODB = Mongodb()
+
+    def database_create_all(self):
+        env: str = self.config.EASY_FRAMEWORK_ENVIRONMENT
+        if getattr(self.config, f"EASY_FRAMEWORK_DB_{env.upper()}_SQL_CREATE_ALL"):
+            database: Sqldb = self.config.EASY_FRAMEWORK_DB_SQLDB
+            Base.metadata.create_all(database.dbConfig.engine)
 
     def auto_import_view(self):
-        if self.app.config['EASY_FRAMEWORK_VIEW_AUTO_IMPORT'] is True:
-            
-            view_folder = self.app.config['EASY_FRAMEWORK_VIEW_FOLDER']
-            view_class_name = self.app.config['EASY_FRAMEWORK_VIEW_CLASS_NAME']
+        if self.config.EASY_FRAMEWORK_VIEW_AUTO_IMPORT is True:
+
+            view_folder = self.config.EASY_FRAMEWORK_VIEW_FOLDER
+            view_class_name = self.config.EASY_FRAMEWORK_VIEW_CLASS_NAME
 
             ViewHandler.register_views(view_folder, self.app, view_class_name)
